@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                echo 'Pulling code from GitHub...'
+                checkout scm
+            }
+        }
+
+        stage('Verify Files') {
+            steps {
+                echo 'Checking project files...'
+                bat 'dir'
+                bat 'dir app'
+                bat 'dir kubernetes'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                bat 'docker build -t flask-devops-app ./app'
+            }
+        }
+
+        stage('Tag Docker Image') {
+            steps {
+                echo 'Tagging Docker image...'
+                bat 'docker tag flask-devops-app spandanaerukulla/flask-devops-app:latest'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo 'Pushing image to Docker Hub...'
+                bat 'docker push spandanaerukulla/flask-devops-app:latest'
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo 'Deploying to Kubernetes...'
+                bat 'kubectl apply -f kubernetes/deployment.yaml'
+                bat 'kubectl apply -f kubernetes/service.yaml'
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                echo 'Verifying Kubernetes deployment...'
+                bat 'kubectl get pods'
+                bat 'kubectl get svc'
+            }
+        }
+    }
+}
